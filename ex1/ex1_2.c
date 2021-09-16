@@ -18,6 +18,7 @@ int main(void) {
     FILE *fp;
 
     // unix.txt 파일에 접근해주는 라이브러리 함수
+    // 오류가 발생하면 NULL 혹은 -1을 리턴함
     if ((fp = fopen("unix.txt", "r")) == NULL) {
         printf("errorno=%d\n", errno);
         exit(1);
