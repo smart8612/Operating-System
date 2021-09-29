@@ -69,7 +69,7 @@ int main(void) {
     // 파일에 기반한 프로세스 통신이 수행된다.
     // ########################################
     // ########################################
-    fd = open("data.txt", O_TRUNC);
+    fd = open("data.txt", O_CREAT);
     if (fd == -1) {
         perror("Open data.txt");
         exit(1);
