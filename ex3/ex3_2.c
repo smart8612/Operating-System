@@ -4,8 +4,51 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
-int main(void) {
+int exec_general_mode();
+void cmpexecmode(char *optarg);
+
+int main(int argc, char *argv[]) {
+    int n;
+    extern char *optarg;
+    extern int optind;
+
+    while ((n = getopt(argc, argv, "t:f:")) != -1) {
+        switch (n)
+        {
+        case 't':
+            cmpexecmode(optarg);
+            break;
+        case 'f':
+            printf("f 모드 입니다.\n");
+            break;
+        default:
+            printf("unhandled option\n");
+            break;
+        }
+        printf("Next Optind : %d\n", optind);
+    }    
+
+    return 0;
+}
+
+void cmpexecmode(char *optarg) {
+    switch (*optarg)
+    {
+    case 'f':
+        printf("Run FIFO Mode\n");
+        break;
+    case 'r':
+        exec_general_mode();
+        break;
+    default:
+        printf("unhandled option\n");
+        break;
+    }
+}
+
+int exec_general_mode() {
     // ########################################
     // ########################################
     // fd: 파일 디스크립터 번호를 저장하는 변수
@@ -133,6 +176,4 @@ int main(void) {
     // ########################################
     // ########################################
     close(fd);
-
-    return 0;
 }
