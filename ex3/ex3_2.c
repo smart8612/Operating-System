@@ -8,12 +8,17 @@
 
 void exec_general_mode();
 void exec_fifo_mode();
+void sendMsg(int fd, char *buf, int n);
 void cmpexecmode(char *optarg);
 
-int main(int argc, char *argv[]) {
+char *file_name;
+
+int main(int argc, char *argv[]) { 
     int n;
     extern char *optarg;
     extern int optind;
+
+    file_name = getenv("COM_FILE");
 
     while ((n = getopt(argc, argv, "t:f:")) != -1) {
         switch (n)
@@ -22,14 +27,17 @@ int main(int argc, char *argv[]) {
             cmpexecmode(optarg);
             break;
         case 'f':
-            printf("f 모드 입니다.\n");
+            file_name = optarg;
             break;
         default:
             printf("unhandled option\n");
             break;
         }
-        printf("Next Optind : %d\n", optind);
-    }    
+    }
+
+    if (n == -1) {
+        cmpexecmode("r");
+    }
 
     return 0;
 }
@@ -50,7 +58,7 @@ void cmpexecmode(char *optarg) {
 }
 
 void exec_fifo_mode() {
-   // ########################################
+    // ########################################
     // ########################################
     // fd: 파일 디스크립터 번호를 저장하는 변수
     // n : R/W가 진행된 byte를 담고 있는 변수
@@ -63,6 +71,10 @@ void exec_fifo_mode() {
     char buf[BUFSIZ];
     struct stat sb;
     mode_t mode;
+
+    if (file_name == NULL) {
+        file_name = "data.fifo";
+    }
 
     // ########################################
     // ########################################
@@ -81,13 +93,13 @@ void exec_fifo_mode() {
     // ########################################
     mode = S_IRUSR | S_IWUSR;
 
-    if (mkfifo("./data.fifo", mode) == -1) {
+    if (mkfifo(file_name, mode) == -1) {
         perror("mkfifo");
         exit(1);
     }
 
-    if ((fd = open("data.fifo", O_WRONLY, mode)) == -1) {
-        perror("Open data.fifo");
+    if ((fd = open(file_name, O_WRONLY, mode)) == -1) {
+        perror("Open file");
         exit(1);
     }
 
@@ -119,7 +131,7 @@ void exec_fifo_mode() {
     // #######################################
     // #######################################
     if (!S_ISFIFO(sb.st_mode)) {
-        perror("data.fifo : Not fifo file");
+        perror("Not fifo file");
         exit(1);
     }
 
@@ -138,40 +150,11 @@ void exec_fifo_mode() {
     // #######################################
     if (S_IRGRP & sb.st_mode | S_IWGRP & sb.st_mode | 
         S_IROTH & sb.st_mode | S_IWOTH & sb.st_mode) {
-        perror("data.fifo must be protected");
+        perror("file must be protected");
         exit(1);
     }
 
-    // ########################################
-    // ########################################
-    // [개요]
-    // 파일에 기반한 프로세스 통신이 수행된다.
-    // ########################################
-    // ########################################
-    while (1) {
-        write(1, ">> ", 3);
-        n = read(0, buf, 255);
-        buf[n] = '\0';
-
-        if (n > 0) {
-            if (write(fd, buf, n) != n) {
-                perror("Write error");
-
-            }
-            
-        } else if (n == -1) {
-            perror("Read error");
-
-        }
-
-        if (n == 1 && buf[0] == 'q') {
-            write(1, "Terminate\n", 10);
-            break;
-            
-        }
-
-        write(1, buf, n);
-    }
+    sendMsg(fd, buf, n);
 
     // ########################################
     // ########################################
@@ -198,6 +181,10 @@ void exec_general_mode() {
     struct stat sb;
     mode_t mode;
 
+    if (file_name == NULL) {
+        file_name = "data.txt";
+    }
+
     // ########################################
     // ########################################
     // int open(const char *path, int oflag [, mode_t mode]);
@@ -215,9 +202,9 @@ void exec_general_mode() {
     // ########################################
     mode = S_IRUSR | S_IWUSR;
 
-    fd = open("data.txt", O_CREAT | O_WRONLY | O_TRUNC, mode);
+    fd = open(file_name, O_CREAT | O_WRONLY | O_TRUNC, mode);
     if (fd == -1) {
-        perror("Open data.txt");
+        perror("Open file");
         exit(1);
     }
 
@@ -249,7 +236,7 @@ void exec_general_mode() {
     // #######################################
     // #######################################
     if (!S_ISREG(sb.st_mode)) {
-        perror("data.txt : Not regular file");
+        perror("Not regular file");
         exit(1);
     }
 
@@ -268,10 +255,29 @@ void exec_general_mode() {
     // #######################################
     if (S_IRGRP & sb.st_mode | S_IWGRP & sb.st_mode | 
         S_IROTH & sb.st_mode | S_IWOTH & sb.st_mode) {
-        perror("data.txt must be protected");
+        perror("file must be protected");
         exit(1);
     }
 
+    // ########################################
+    // ########################################
+    // [개요]
+    // 파일에 기반한 프로세스 통신이 수행된다.
+    // ########################################
+    // ########################################
+    sendMsg(fd, buf, n);
+
+    // ########################################
+    // ########################################
+    // [개요]
+    // 프로그램이 종료되면 파일디스크립터 사용을
+    // 해제한다.
+    // ########################################
+    // ########################################
+    close(fd);
+}
+
+void sendMsg(int fd, char *buf, int n) {
     // ########################################
     // ########################################
     // [개요]
@@ -302,13 +308,4 @@ void exec_general_mode() {
 
         write(1, buf, n);
     }
-
-    // ########################################
-    // ########################################
-    // [개요]
-    // 프로그램이 종료되면 파일디스크립터 사용을
-    // 해제한다.
-    // ########################################
-    // ########################################
-    close(fd);
 }
