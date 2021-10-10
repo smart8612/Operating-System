@@ -93,14 +93,12 @@ void exec_fifo_mode() {
     // ########################################
     mode = S_IRUSR | S_IWUSR;
 
-    if (mkfifo(file_name, mode) == -1) {
-        perror("mkfifo");
-        exit(1);
-    }
-
     if ((fd = open(file_name, O_WRONLY, mode)) == -1) {
-        perror("Open file");
-        exit(1);
+        if (mkfifo(file_name, mode) == -1) {
+            perror("mkfifo");
+            exit(1);
+        }
+        fd = open(file_name, O_WRONLY, mode);
     }
 
     // ########################################
