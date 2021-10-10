@@ -8,7 +8,7 @@
 
 void exec_general_mode();
 void exec_fifo_mode();
-void sendMsg(int fd, char *buf, int n);
+void sendMsg(int fd, char *buf);
 void cmpexecmode(char *optarg);
 
 char *file_name;
@@ -67,7 +67,7 @@ void exec_fifo_mode() {
     // mode : 파일의 권한 설정
     // ########################################
     // ########################################
-    int fd, n;
+    int fd;
     char buf[BUFSIZ];
     struct stat sb;
     mode_t mode;
@@ -152,7 +152,7 @@ void exec_fifo_mode() {
         exit(1);
     }
 
-    sendMsg(fd, buf, n);
+    sendMsg(fd, buf);
 
     // ########################################
     // ########################################
@@ -174,7 +174,7 @@ void exec_general_mode() {
     // mode : 파일의 권한 설정
     // ########################################
     // ########################################
-    int fd, n;
+    int fd;
     char buf[BUFSIZ];
     struct stat sb;
     mode_t mode;
@@ -263,7 +263,7 @@ void exec_general_mode() {
     // 파일에 기반한 프로세스 통신이 수행된다.
     // ########################################
     // ########################################
-    sendMsg(fd, buf, n);
+    sendMsg(fd, buf);
 
     // ########################################
     // ########################################
@@ -275,7 +275,7 @@ void exec_general_mode() {
     close(fd);
 }
 
-void sendMsg(int fd, char *buf, int n) {
+void sendMsg(int fd, char *buf) {
     // ########################################
     // ########################################
     // [개요]
@@ -284,7 +284,7 @@ void sendMsg(int fd, char *buf, int n) {
     // ########################################
     while (1) {
         write(1, ">> ", 3);
-        n = read(0, buf, 255);
+        int n = read(0, buf, 255);
         buf[n] = '\0';
 
         if (n > 0) {
